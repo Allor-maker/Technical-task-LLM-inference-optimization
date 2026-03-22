@@ -8,6 +8,9 @@
 #include "../include/Batch.h"
 #include "../include/ScheduleModel.h"
 
+
+const double D = 0;
+
 int64_t parse_time_to_ms(const std::string& datetime) {
     int year = 0, month = 0, day = 0, hour = 0, min = 0;
     double sec_double = 0.0;
@@ -98,10 +101,10 @@ int main() {
 
     std::cout << end_time << "\n";
     std::cout << requests.size() << "\n";
-
+ 
     ScheduleModel model(requests, end_time);
     model.cycle();
-
+    
     std::vector<double> ttft, t_stats;
     for (const auto& req : requests) {
         ttft.push_back(static_cast<double>(req->TTFT));
@@ -119,9 +122,13 @@ int main() {
     }
 
     if (!t_stats.empty()) {
+        double min_v = *std::min_element(t_stats.begin(), t_stats.end());
+        double max_v = *std::max_element(t_stats.begin(), t_stats.end());
+
         std::cout << "\n--- T (Time per Token) Statistics (ms/token) ---\n";
         std::cout << "Median: " << std::fixed << std::setprecision(2) << get_median(t_stats) << "\n";
         std::cout << "Average: " << get_mean(t_stats) << "\n";
+        std::cout << "Min: " << min_v << ", Max: " << max_v << "\n";
     }
 
     return 0;

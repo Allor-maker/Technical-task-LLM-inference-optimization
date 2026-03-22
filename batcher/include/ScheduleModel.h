@@ -5,8 +5,8 @@
 #include "./Accelerator.h"
 
 const int N = 10;           // num accelerators
-const double M = 350000.0;  // available memory
-
+const double M = 317000.0;  // available memory
+double max_footprint = -1.0;
 class ScheduleModel {
 public:
     size_t curr_req;
@@ -31,7 +31,7 @@ public:
                 if (a.call(curr_time) == Stage::FINISHED) {
                     size_t num = a.finish();
                     req_done += num;
-                    //std::cout << req_done << " / " << total_size << "\n";
+                    std::cout << req_done << " / " << total_size << "\n";
                 }
             }
         }
@@ -40,10 +40,7 @@ public:
     void cycle() {
         while (curr_time < end_time + 1) {
             int batch_status = batch.get_status();
-            if (curr_time == 4848312)
-            {
-                curr_time = curr_time;
-            }
+
             while (curr_req < total_size && requests[curr_req]->get_offset() == curr_time) {
                 Q.push_back(requests[curr_req]);
                 curr_req++;
@@ -52,10 +49,10 @@ public:
             {
                 auto curr_elem = Q.front();
                 Q.pop_front();
-                    
                 double sum = batch.get_footprint() + curr_elem->get_footprint();
                 if (sum < M) {
                     batch.add_req(curr_elem);
+                    
                 } else {
                     if (batch.size() == 0) std::cout << sum << "\n";
                     batch.set_status(1);
@@ -73,18 +70,32 @@ public:
                     }
                 }
             }
+
+            if (batch_status == 2)
+            {
+                
+                batch_status = 1;
+                batch.create_agregation();
+                for (int i = 0; i < N; ++i) {
+                    if (!accelerators[i].is_working()) {
+                        accelerators[i].start(batch);
+                        break;
+                    }
+                }
+            }
             tick();
+            batch.update_wait_t();
             curr_time++;
         }
-    
-        //std::cout << "!!!\n";
-        //std::cout << Q.size() << "\n";
 
         while (!Q.empty()) {
             if (batch.get_status() != 1) {
                 auto curr_elem = Q.front();
                 Q.pop_front();
-                double sum = batch.get_footprint() + curr_elem->get_footprint();
+                double curr_fp = curr_elem->get_footprint();
+                if (curr_fp > max_footprint)
+                    max_footprint = curr_fp;
+                double sum = batch.get_footprint() + curr_fp;
                 
                 if (sum < M) {
                     batch.add_req(curr_elem);
@@ -98,7 +109,6 @@ public:
             if (batch_status == 1) {
                 for (int i = 0; i < N; ++i) {
                     if (!accelerators[i].is_working()) {
-                        std::cout << i << "\n";
                         accelerators[i].start(batch);
                         break;
                     }
@@ -111,7 +121,6 @@ public:
         while (batch.size() != 0) {
             for (int i = 0; i < N; ++i) {
                 if (!accelerators[i].is_working()) {
-                    //std::cout << "starting\n";
                     accelerators[i].start(batch);
                     break;
                 }
@@ -134,5 +143,6 @@ public:
                 curr_time++;
             }
         }
+        
     }
 };

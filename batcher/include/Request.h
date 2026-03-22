@@ -35,6 +35,7 @@ public:
     int64_t end_stage_2;
     int64_t TTFT;
     double T;
+    int wait_in_batch;
     
     double ticks[4] = {0.0, 0.0, 0.0, 0.0}; 
     double costs[4] = {0.0, 0.0, 0.0, 0.0};
@@ -43,7 +44,7 @@ public:
     Request(std::string ts_str, int imgs, int ctx_tokens, int gen_tokens, int64_t offset) 
         : status(Stage::START), timestep_str(ts_str), num_images(imgs), 
           num_context_tokens(ctx_tokens), num_gen_tokens(gen_tokens), 
-          offset_ms(offset), end_stage_2(0), TTFT(0), T(0) 
+          offset_ms(offset), end_stage_2(0), TTFT(0), T(0), wait_in_batch(0)
     {
         ticks[1] = A * num_images;
         ticks[2] = B * num_context_tokens;

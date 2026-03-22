@@ -5,6 +5,8 @@
 #include "./Request.h"
 #include <cmath>
 
+const double P = 47750;
+
 class Batch {
 public:
     double curr_footprint;
@@ -39,7 +41,17 @@ public:
             req->calc_costs();
         }
     }
-
+    void update_wait_t()
+    {
+        for (auto& req : batch)
+        {
+            req->wait_in_batch += 1;
+            if (req->wait_in_batch >= P)
+            {
+                status = 2;
+            }
+        }
+    }
     int add_req(std::shared_ptr<Request> req) {
         double fp = req->get_footprint();
         batch.push_back(req);
